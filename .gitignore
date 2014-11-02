@@ -73,6 +73,8 @@ build/android/gen
 build/android/jni/src/*
 build/android/libs
 build/android/obj
+_build
+_externals
 timestamp
 
 

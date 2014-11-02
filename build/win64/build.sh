@@ -5,26 +5,43 @@ parallel=`grep -c ^processor /proc/cpuinfo`
 host=`head -1 /etc/issue`
 
 dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+topdir=$dir/../../
 libdir=$dir/externals
 
 if [[ "Fedora release 20 (Heisenbug)" == "$host" ]]
 then
 	toolchain_file=$dir/fedora20/toolchain_mingw64.cmake
+	. $dir/fedora20/env.sh
 else
 	toolchain_file=$dir/toolchain_mingw64.cmake
 fi
 irrlicht_version=1.8.1
 
 # Get minetest_game
-cd $dir/../../games
+cd $topdir/games
 [ -d minetest_game ] && /usr/bin/rm -rf minetest_game
 wget https://github.com/minetest/minetest_game/archive/master.zip
 unzip master.zip
 rm master.zip
 mv minetest_game-master minetest_game
 
+#Build dependancies
+# irrlicht
+cd $topdir
+if [ ! -f "_externals/irrlicht-$irrlicht_version/bin/Win64-gcc/Irrlicht.dll" ]
+then
+	mkdir -p _externals/irrlicht-$irrlicht_version/bin/Win64-gcc
+	mkdir -p _externals/irrlicht-$irrlicht_version/lib/Win64-gcc
+	cp -r externals/irrlicht-1.8.1/* _externals/irrlicht-$irrlicht_version/
+	cd _externals/irrlicht-$irrlicht_version/source/Irrlicht/
+	sed -i 's/Win32-gcc/Win64-gcc/g' Makefile Irrlicht-gcc.cbp Irrlicht.dev
+	sed -i 's/ld3dx9d/ld3d9/g' Makefile
+	make win32
+fi
+cd $topdir
+
 # Build the thing
-cd $dir/../../
+cd $topdir
 git_hash=`git show | head -c14 | tail -c7`
 [ -d _build ] && rm -Rf _build/
 mkdir _build
@@ -41,9 +58,9 @@ cmake .. \
 	-DENABLE_FREETYPE=1 \
 	-DENABLE_LEVELDB=1 \
 	\
-	-DIRRLICHT_INCLUDE_DIR=$libdir/irrlicht-$irrlicht_version/include \
-	-DIRRLICHT_LIBRARY=$libdir/irrlicht-$irrlicht_version/lib/Win64-gcc/libIrrlicht.dll.a \
-	-DIRRLICHT_DLL=$libdir/irrlicht-$irrlicht_version/bin/Win64-gcc/Irrlicht.dll \
+	-DIRRLICHT_INCLUDE_DIR=$topdir/_externals/irrlicht-$irrlicht_version/include \
+	-DIRRLICHT_LIBRARY=$topdir/_externals/irrlicht-$irrlicht_version/lib/Win64-gcc/libIrrlicht.a \
+	-DIRRLICHT_DLL=$topdir/_externals/irrlicht-$irrlicht_version/bin/Win64-gcc/Irrlicht.dll \
 	\
 	-DZLIB_INCLUDE_DIR=$libdir/zlib/include \
 	-DZLIB_LIBRARIES=$libdir/zlib/lib/libz.dll.a \
