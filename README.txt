@@ -342,6 +342,12 @@ popd
 echo Failed.
 exit /b 1
 
+Building minetest for Windows 64 in Fedora 20
+---------------------------------------------
+$ cd minetest
+$ ./build/win64/build.sh
+
+
 License of Minetest textures and sounds
 ---------------------------------------
 
