@@ -35,7 +35,11 @@ then
 	cp -r externals/irrlicht-1.8.1/* _externals/irrlicht-$irrlicht_version/
 	cd _externals/irrlicht-$irrlicht_version/source/Irrlicht/
 	sed -i 's/Win32-gcc/Win64-gcc/g' Makefile Irrlicht-gcc.cbp Irrlicht.dev
-	sed -i 's/ld3dx9d/ld3d9/g' Makefile
+	sed -i 's/ld3dx9d/ld3dx9_43/g' Makefile
+	sed -i 's/-DNO_IRR_COMPILE_WITH_DIRECT3D_9_//' Makefile
+	# BUG in d3d9.h (mingw64)
+	# http://sourceforge.net/p/mingw-w64/bugs/409/
+	sed -i 's/D3DPRESENT_LINEAR_CONTENT/0x00000002L/g' CD3D9Driver.cpp
 	make win32
 fi
 cd $topdir
