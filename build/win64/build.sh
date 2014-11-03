@@ -11,19 +11,20 @@ libdir=$dir/externals
 if [[ "Fedora release 20 (Heisenbug)" == "$host" ]]
 then
 	toolchain_file=$dir/fedora20/toolchain_mingw64.cmake
-	. $dir/fedora20/env.sh
+	hostdir=$dir/fedora20/
 else
 	toolchain_file=$dir/toolchain_mingw64.cmake
 fi
+. $hostdir/env.sh
 irrlicht_version=1.8.1
 
 # Get minetest_game
-cd $topdir/games
-[ -d minetest_game ] && /usr/bin/rm -rf minetest_game
-wget https://github.com/minetest/minetest_game/archive/master.zip
-unzip master.zip
-rm master.zip
-mv minetest_game-master minetest_game
+#cd $topdir/games
+#[ -d minetest_game ] && /usr/bin/rm -rf minetest_game
+#wget https://github.com/minetest/minetest_game/archive/master.zip
+#unzip master.zip
+#rm master.zip
+#mv minetest_game-master minetest_game
 
 #Build dependancies
 # irrlicht
@@ -42,7 +43,23 @@ then
 	sed -i 's/D3DPRESENT_LINEAR_CONTENT/0x00000002L/g' CD3D9Driver.cpp
 	make win32
 fi
+
+#leveldb
 cd $topdir
+if [ ! -f "_externals/leveldb/bin/libleveldb.dll" ]
+then
+	mkdir -p _externals/leveldb/bin/
+	mkdir -p _externals/leveldb/lib/
+	cp -r externals/leveldb-1.15/* _externals/leveldb/
+	cd _externals/leveldb/
+	# The patch file is build from https://github.com/bitcoin/bitcoin
+	# and https://github.com/zalanyib/leveldb-mingw
+	patch -p1 < $hostdir/leveldb.patch
+	TARGET_OS=OS_WINDOWS_CROSSCOMPILE CC=x86_64-w64-mingw32-gcc CXX=x86_64-w64-mingw32-g++ AR=x86_64-w64-mingw32-ar \
+        make libleveldb.a libleveldb.dll
+	mv libleveldb.a libleveldb.dll.a lib/
+	mv libleveldb.dll bin/
+fi
 
 # Build the thing
 cd $topdir
@@ -96,9 +113,9 @@ cmake .. \
 	-DFREETYPE_LIBRARY=$libdir/freetype/lib/libfreetype.dll.a \
 	-DFREETYPE_DLL=$libdir/freetype/bin/libfreetype-6.dll \
 	\
-	-DLEVELDB_INCLUDE_DIR=$libdir/leveldb/include \
-	-DLEVELDB_LIBRARY=$libdir/leveldb/lib/libleveldb.dll.a \
-	-DLEVELDB_DLL=$libdir/leveldb/bin/libleveldb.dll \
+	-DLEVELDB_INCLUDE_DIR=$topdir/_externals/leveldb/include \
+	-DLEVELDB_LIBRARY=$topdir/_externals/leveldb/lib/libleveldb.dll.a \
+	-DLEVELDB_DLL=$topdir/_externals/leveldb/bin/libleveldb.dll \
 	\
 	-DCUSTOM_GETTEXT_PATH=$libdir/gettext \
 	-DGETTEXT_MSGFMT=`which msgfmt` \
