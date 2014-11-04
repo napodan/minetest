@@ -1,5 +1,0 @@
-This directory was created with
-wget http://downloads.sourceforge.net/irrlicht/irrlicht-1.8.1.zip
-unzip irrlicht-1.8.1.zip
-\rm -rf bin/ doc/ examples/ lib/ media/ tools/
-
